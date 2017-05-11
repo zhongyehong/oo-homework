@@ -1,0 +1,114 @@
+{% extends "base_AdminLTE.html"%}
+
+{% block title %}图书{% endblock %}
+
+{% block css_src %}
+<link href="//cdn.bootcss.com/datatables/1.10.11/css/dataTables.bootstrap.min.css" rel="stylesheet">
+<link href="//cdn.bootcss.com/datatables/1.10.11/css/jquery.dataTables_themeroller.css" rel="stylesheet">
+<link href="/static/dist/css/modalconfig.css" rel="stylesheet">
+{% endblock %}
+
+
+{% block content %}
+<div class="row">
+         <div class="col-lg-12">
+           <div class="box box-info">
+                <div class="box-header with-border">
+                  <h3 class="box-title">进货订单列表</h3>
+                  <div class="box-tools pull-right">
+                    <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+                    </button>
+                    <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                  </div>
+                </div>
+                 <div class="box-body" >
+
+                     <table class="table table-striped table-bordered table-hover table-image" >
+                         <thead>
+                         <tr>
+                             <th>ID</th>
+                             <th>书名/书ID</th>
+			     <th>当前竞价</th>
+			     <th>订单状态</th>
+			     <th>竞价用户/ID</th>
+			     {% if session['usertype'] == 'supplier' %}
+			     <th>参与竞价</th>
+			     {% else %}
+			     <th>接受</th>
+			     {% endif %}
+                         </tr>
+                         </thead>
+			 <tbody>
+			{% for orderform in orderforms %}
+			 <tr>
+				<td>{{orderform['id']}}</td>
+				<td>{{orderform['bookname']}}/{{orderform['bookid']}}</td>
+				<td>{{orderform['curprice']}}</td>
+				<td>{{orderform['status']}}</td>
+				<td>{{orderform['biddername']}}/{{orderform['bidderid']}}</td>
+			     	{% if session['usertype'] == 'supplier' %}
+				{% if orderform['biddername'] == session['username'] %}
+				<td><p>当前出价最高者是你</p></td>
+				{% else %}
+				<td><button type="button" class="btn btn-xs btn-success" data-toggle="modal" data-target="#bid_{{orderform['id']}}">出价</button></td>
+				<div class = "modal inmodal" id="bid_{{orderform['id']}}" tabindex="-1" role="dialog" aria-hidden="true">
+                                   <div class="modal-dialog">
+                                   <div class="modal-content animated fadeIn">
+                                           <div class="modal-header">
+                                               <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                                               <i class="fa fa-plus modal-icon"></i>
+                                               <h4 class="modal-title">出价</h4>
+					       <small class="font-bold">当前价格:{{orderform['curprice']}}</small>
+                                           </div>
+                                           <div class="modal-body">
+						   <form action="/bid/{{orderform['id']}}/" method="POST" >
+							   <div class = "form-group">
+								   <label class="control-label">你的出价</label>
+								   <div><input type="number" step=0.01 class="form-control" name="curprice" id="curprice"></div>
+							   </div>
+					   </div>
+						<div class="modal-footer">
+                                               		<button type="button" class="btn btn-white" data-dismiss="modal">Close</button>
+                                               		<button type="submit" class="btn btn-success">出价</button>
+						   </form>
+						</div>
+				   </div>
+				   </div>
+				</div>
+
+				{% endif %}
+				{% else %}
+				{% if orderform['bidderid'] == 0 %}
+				<td>当前无人出价</td>
+				{% elif orderform['status'] == 'closed' %}
+				<td>交易已完成</td>
+				{% else %}
+				<td><a href="/acceptstockform/{{orderform['id']}}/"><button type="button" class="btn btn-xs btn-success">接受</button></a></td>
+				{% endif %}
+				{% endif %}
+              		 </tr>
+		        {% endfor %}
+			</tbody>
+		  </table>
+		</div>
+	</div>
+	</div>
+</div>
+
+{% endblock %}
+
+{% block script_src %}
+
+<script src="http://cdn.bootcss.com/datatables/1.10.11/js/jquery.dataTables.js"></script>
+<script src="http://cdn.bootcss.com/datatables/1.10.11/js/dataTables.bootstrap.js"></script>
+<script src="http://cdn.bootcss.com/datatables-tabletools/2.1.5/js/TableTools.min.js"></script>
+
+<script>
+         $(document).ready(function() {
+            $(".table-image").DataTable();
+            $(".table-image").attr("style","");
+         });
+
+ </script>
+
+{% endblock %}
