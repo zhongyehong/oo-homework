@@ -43,10 +43,11 @@
                          </thead>
 			 <tbody>
 			{% for book in books %}
+			{% if  book['bookerid'] == -1 %}
 			 <tr>
 				<td>{{book['id']}}</td>
 				<td><a href="/message/{{book['description']}}/">{{book['bookname']}}</a></td>
-				<td>{{book['price']}}</td>
+				<td>{{book['price']}}->{{book['trueprice']}}</td>
 				<td>{{book['number']}}</td>
 			     {% if session['usertype'] == 'customer' %}
 				{% if book['id'] in collections %}
@@ -60,12 +61,66 @@
 				<td><p>库存不足</p></td>
 				{% endif %}
 			     {% else %}
-			     <td><a href="/addstockform/{{book['id']}}/"><button class="btn btn-primary btn-sm">进货</button></a><td>
+			     <td><a href="/addstockform/{{book['id']}}/"><button class="btn btn-primary btn-sm">进货</button></a>
+				     <form  action="/changedis/{{book['id']}}/" method="POST">
+					     <input type="number" name="discount" value={{book['discount']}} />
+					     <button class="btn btn-primary btn-sm" type="submit">修改折扣</button>
+				     </form>
+			     </td>
 			     {% endif %}
               		 </tr>
+			 {% endif %}
 		        {% endfor %}
 			</tbody>
 		  </table>
+		  <br/>
+		  <h2>预订列表</h2>
+		  <br/>
+			 {% if session['usertype'] == 'customer' %}
+			 <a href="/bookbook/"><button type="button" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i>预订图书</button></a>
+			 {% endif %}
+                     <table class="table table-striped table-bordered table-hover table-image" >
+                         <thead>
+                         <tr>
+                             <th>ID</th>
+                             <th>书名</th>
+			     <th>价格</th>
+			     {% if session['usertype'] == 'customer' %}
+			     <th>状态</th>
+			     {% else %}
+			     <th>接受</th>
+			     {% endif %}
+                         </tr>
+                         </thead>
+			 <tbody>
+			{% for book in books %}
+			{% if (not book['bookerid'] == -1) and ((session['usertype'] == 'customer' and session['userid'] == book['bookerid']) or session['usertype'] == 'shopkeeper') %}
+			 <tr>
+				<td>{{book['id']}}</td>
+				<td><a href="/message/{{book['description']}}/">{{book['bookname']}}</a></td>
+				<td>{{book['price']}}</td>
+			     {% if session['usertype'] == 'customer' %}
+			     {% if book['number'] == 1 %}
+				<td><p>已接受</p></td>
+			     {% elif book['number'] == -1 %}
+			     	<td><p>已拒绝</p></td>
+			     {% else %}
+			     	<td><p>待接受</p></td>
+			     {% endif %}
+			     {% else %}
+			     {% if book['number'] == 1 %}
+				<td><p>已接受</p></td>
+			     {% elif book['number'] == -1 %}
+			     	<td><p>已拒绝</p></td>
+			     {% else %}
+			     <td><a href="/acceptbook/{{book['id']}}/"><button class="btn btn-primary btn-sm">接受</button></a><td>
+			     {% endif %}
+			     {% endif %}
+              		 </tr>
+			 {% endif %}
+		        {% endfor %}
+			</tbody>
+		     </table>
 		</div>
 	</div>
 	</div>

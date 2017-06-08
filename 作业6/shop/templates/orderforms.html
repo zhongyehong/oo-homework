@@ -59,6 +59,42 @@
 		        {% endfor %}
 			</tbody>
 		  </table>
+                     
+		  <table class="table table-striped table-bordered table-hover table-image" >
+                         <thead>
+                         <tr>
+                             <th>ID</th>
+                             <th>捆绑包名/捆绑包ID</th>
+			     <th>价格</th>
+			     <th>订单状态</th>
+			     <th>地址</th>
+			     {% if session['usertype'] == 'shopkeeper' %}
+			     <th>下单用户/ID</th>
+			     {% else %}
+			     <th>付款</th>
+			     {% endif %}
+                         </tr>
+                         </thead>
+			 <tbody>
+			{% for packageorderform in packageorderforms %}
+			 <tr>
+				<td>{{packageorderform['id']}}</td>
+				<td>{{packageorderform['packagename']}}/{{packageorderform['packageid']}}</td>
+				<td>{{packageorderform['price']}}</td>
+				<td>{{packageorderform['status']}}</td>
+				<td>{{packageorderform['address']}}</td>
+			     	{% if session['usertype'] == 'shopkeeper' %}
+				<td>{{packageorderform['username']}}/{{packageorderform['userid']}}</td>
+				{% else %}
+				{% if packageorderform['status'] == 'paid' %}
+				<td><p>已付款</p></td>
+				{% else %}
+				<td><a href="/payforpackage/{{packageorderform['id']}}/"><button type="button" class="btn btn-xs btn-success">付款</button></a></td>
+				{% endif %}
+				{% endif %}
+              		 </tr>
+		        {% endfor %}
+			</tbody>
 		</div>
 	</div>
 	</div>

@@ -5,6 +5,7 @@ import json, os, sys
 from flask import *
 from user import *
 from bookmanager import *
+from packagemanager import *
 
 app = Flask(__name__)
 
@@ -32,6 +33,7 @@ def trylogin():
     if res == True:
         session['username'] = username
         session['usertype'] = userlist[username].obj.usertype
+        session['userid'] = userlist[username].obj.id
         session['money'] = userlist[username].obj.money
         return redirect("/books/")
     else:
@@ -43,7 +45,7 @@ def logout():
     session.pop('money', None)
     session.pop('usertype', None)
     return redirect("/login/")
-
+0
 @app.route("/message/<message>/", methods = ['GET'])
 def messaege(message):
     return render_template('message.html', message = message)
@@ -58,9 +60,38 @@ def books():
         collections.append(collectioninfo['id'])
     return render_template('books.html', books = books, collections = collections, session = session)
 
+@app.route("/packages/", methods = ['GET'])
+def packages():
+    global userlist
+    packages = PackageManager.getPackageInfo()
+    for package in packages:
+        for book in package['booksinfo']:
+            print(book['bookname'])
+    return render_template('packages.html', packages = packages, session = session)
+
+
 @app.route("/addbook/", methods = ['GET'])
 def addbook():
     return render_template('addbook.html', session = session)
+
+@app.route("/bookbook/", methods = ['GET'])
+def bookbook():
+    return render_template('bookbook.html', session = session)
+
+@app.route("/changedis/<bookid>/", methods = ['POST'])
+def changedis(bookid):
+    userlist[session['username']].changedis(int(bookid),int(request.form['discount']))
+    return redirect('/books/')
+
+@app.route("/addpackage/", methods = ['GET'])
+def addpackage():
+    books = BookManager.getBookInfo()
+    return render_template('addpackage.html', books = books, session = session)
+
+@app.route("/deletepackage/<packageid>/", methods = ['GET'])
+def deletepackage(packageid):
+    PackageManager.deletePackage(packageid)
+    return redirect('/packages/')
 
 @app.route("/createbook/", methods = ['POST'])
 def createbook():
@@ -70,6 +101,33 @@ def createbook():
     description = request.form['description']
     BookManager.createBook(bookname, price, number, description)
     return redirect('/books/')
+
+@app.route("/createbookbook/", methods = ['POST'])
+def createbookbook():
+    global userlist
+    bookname = request.form['bookname']
+    price = float(request.form['price'])
+    description = request.form['description']
+    userlist[session['username']].bookBook(bookname, price, description)
+    return redirect('/books/')
+
+@app.route("/acceptbook/<bookid>/", methods = ['GET'])
+def acceptbook(bookid):
+    global userlist
+    bookername = userlist[session['username']].acceptBook(bookid)
+    userlist[bookername].createOrderForm(int(bookid),'pku')
+    return redirect('/books/')
+
+@app.route("/createpackage/", methods = ['POST'])
+def createpackage():
+    packagename = request.form['packagename']
+    price = float(request.form['price'])
+    description = request.form['description']
+    print(description)
+    booksid = request.form.getlist('booksid')
+    print(booksid)
+    PackageManager.createPackage(packagename, booksid, price, description)
+    return redirect('/packages/')
 
 @app.route("/addstockform/<bookid>/", methods = ['GET'])
 def addstockform(bookid):
@@ -99,8 +157,8 @@ def collections():
 @app.route("/orderforms/", methods = ['GET'])
 def orderforms():
     global userlist
-    orderforms = userlist[session['username']].getOrderForm()
-    return render_template('orderforms.html', orderforms = orderforms, session = session)
+    [orderforms,packageorderforms] = userlist[session['username']].getOrderForm()
+    return render_template('orderforms.html', orderforms = orderforms, packageorderforms = packageorderforms, session = session)
 
 @app.route("/allorderforms/", methods = ['GET'])
 def allorderforms():
@@ -130,6 +188,12 @@ def buy(bookid):
     userlist[session['username']].createOrderForm(int(bookid),'pku')
     return redirect("/orderforms/")
 
+@app.route("/buypackage/<packageid>/", methods = ['GET'])
+def buypackage(packageid):
+    global userlist
+    userlist[session['username']].createPackageOrderForm(int(packageid),'pku')
+    return redirect("/orderforms/")
+
 @app.route("/bid/<stockformid>/", methods = ['POST'])
 def bid(stockformid):
     global userlist
@@ -144,6 +208,16 @@ def bid(stockformid):
 def pay(orderformid):
     global userlist
     res = userlist[session['username']].payforOrderForm(int(orderformid),userlist['shopkeeper'])
+    session['money'] = userlist[session['username']].obj.money
+    if res == True:
+        return render_template("message.html", message = "付款成功")
+    else:
+        return render_template("message.html", message = "余额不足，付款失败")
+
+@app.route("/payforpackage/<packageorderformid>/", methods = ['GET'])
+def payforpackage(packageorderformid):
+    global userlist
+    res = userlist[session['username']].payforOrderForm(int(packageorderformid),userlist['shopkeeper'],"package")
     session['money'] = userlist[session['username']].obj.money
     if res == True:
         return render_template("message.html", message = "付款成功")

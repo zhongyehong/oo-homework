@@ -9,6 +9,7 @@ class BookManager():
         db.session.commit()
         return True
 
+
     @staticmethod
     def editBookInfo(bookid, bookname, price, number, description):
         book = Book.query.filter_by(id = bookid).first()
@@ -36,7 +37,10 @@ class BookManager():
                     'bookname': book.bookname,
                     'price': book.price,
                     'number': book.number,
-                    'description': book.description
+                    'description': book.description,
+                    'bookerid':book.bookerid,
+                    'trueprice':float(book.price)*float(book.discount)/10,
+                    'discount':book.discount
                     }
             booksinfo.append(bookinfo)
         return booksinfo
@@ -49,6 +53,10 @@ class BookManager():
                'bookname': book.bookname,
                'price': book.price,
                'number': book.number,
-               'description': book.description
+               'description': book.description,
+               'bookerid':book.bookerid,
+               'trueprice':float(book.price)*float(book.discount)/10,
+               'discount':book.discount
                }
         return bookinfo
+
